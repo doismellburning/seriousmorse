@@ -39,7 +39,6 @@ arduinoLoop channel = withArduino True "/dev/cu.usbmodemfd131" $ do
     let led = digital outPin
     setPinMode led OUTPUT
     forever $ do
-        liftIO $ threadDelay (1000 * 1000) -- microseconds -> 1s
         message <- liftIO $ fmap (fromMaybe defaultMessage) $ BC.tryReadChan channel
         transmit led message
 
@@ -71,6 +70,7 @@ twInfo = liftM3 setCredential tokens credential def
 
 twitterLoop :: BC.BoundedChan String -> IO ()
 twitterLoop _ = forever $ do
+    threadDelay (1000 * 1000 * 90) -- 1.5 minutes; only allowed 15 requests per 15 minutes (i.e. 1 per minute) so wait 1.5 minutes to definitely avoid this... https://dev.twitter.com/docs/rate-limiting/1.1/limits
     t <- twInfo
     runNoLoggingT . runTW t $ do
         sourceWithMaxId mentionsTimeline
