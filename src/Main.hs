@@ -1,6 +1,5 @@
 import Control.Monad
 import Data.ByteString.Char8 (pack)
-import Data.Maybe
 import Data.Word
 import System.Environment
 import System.Hardware.Arduino
