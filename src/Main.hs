@@ -39,6 +39,7 @@ arduinoLoop channel = withArduino True "/dev/cu.usbmodemfd131" $ do
     let led = digital outPin
     setPinMode led OUTPUT
     forever $ do
+        liftIO $ threadDelay (1000 * 1000) -- microseconds -> 1s
         message <- liftIO $ fmap (fromMaybe defaultMessage) $ BC.tryReadChan channel
         transmit led message
 
