@@ -18,7 +18,9 @@ cabal-version:       >=1.10
 executable seriousmorse
     build-depends:
         base >=4.6 && <4.7
+        , BoundedChan
         , hArduino == 0.9
+        , mtl
     default-language:
         Haskell2010
     ghc-options:
