@@ -18,6 +18,7 @@ cabal-version:       >=1.10
 executable seriousmorse
     build-depends:
         base >=4.6 && <4.7
+        , twitter-conduit
         , hArduino == 0.9
     default-language:
         Haskell2010
