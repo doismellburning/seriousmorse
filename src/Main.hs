@@ -1,5 +1,10 @@
+
+import Control.Concurrent
+import qualified Control.Concurrent.BoundedChan as BC
 import Control.Monad
+import Control.Monad.Trans (liftIO)
 import Data.ByteString.Char8 (pack)
+import Data.Maybe
 import Data.Word
 import System.Environment
 import System.Hardware.Arduino
@@ -8,10 +13,24 @@ import Web.Authenticate.OAuth
 import Web.Twitter.Conduit
 
 main :: IO ()
-main = withArduino True "/dev/cu.usbmodemfd131" $ do
+main = do
+    putStrLn "Building channels"
+    channel <- BC.newBoundedChan channelSize
+    putStrLn "Starting Arduino loop"
+    _ <- forkIO $ arduinoLoop channel
+    putStrLn "Running!"
+
+channelSize = 10
+
+defaultMessage = "serious emf"
+
+arduinoLoop :: BC.BoundedChan String -> IO ()
+arduinoLoop channel = withArduino True "/dev/cu.usbmodemfd131" $ do
     let led = digital outPin
     setPinMode led OUTPUT
-    forever $ transmit led "seriousmorse at emf"
+    forever $ do
+        message <- liftIO $ fmap (fromMaybe defaultMessage) $ BC.tryReadChan channel
+        transmit led message
 
 outPin :: Word8
 outPin = 12
