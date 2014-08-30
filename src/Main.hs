@@ -28,6 +28,7 @@ main = do
     putStrLn "Starting Twitter loop"
     _ <- forkIO $ twitterLoop channel
     putStrLn "Running!"
+    forever $ threadDelay 1000
 
 channelSize = 10
 
