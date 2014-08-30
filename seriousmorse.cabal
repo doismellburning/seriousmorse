@@ -21,8 +21,12 @@ executable seriousmorse
         , BoundedChan
         , authenticate-oauth
         , bytestring
+        , conduit
         , hArduino == 0.9
+        , lens
+        , monad-logger
         , mtl
+        , text
         , twitter-conduit
     default-language:
         Haskell2010

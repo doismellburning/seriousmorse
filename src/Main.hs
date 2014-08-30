@@ -1,10 +1,17 @@
+{-# LANGUAGE OverloadedStrings #-}
 
 import Control.Concurrent
 import qualified Control.Concurrent.BoundedChan as BC
+import Control.Lens
 import Control.Monad
+import Control.Monad.Logger
 import Control.Monad.Trans (liftIO)
 import Data.ByteString.Char8 (pack)
+import Data.Conduit
+import qualified Data.Conduit.List as CL
 import Data.Maybe
+import qualified Data.Text as T
+import qualified Data.Text.IO as T
 import Data.Word
 import System.Environment
 import System.Hardware.Arduino
@@ -18,6 +25,8 @@ main = do
     channel <- BC.newBoundedChan channelSize
     putStrLn "Starting Arduino loop"
     _ <- forkIO $ arduinoLoop channel
+    putStrLn "Starting Twitter loop"
+    _ <- forkIO $ twitterLoop channel
     putStrLn "Running!"
 
 channelSize = 10
@@ -57,3 +66,17 @@ credential =
 
 twInfo :: IO TWInfo
 twInfo = liftM3 setCredential tokens credential def
+
+twitterLoop :: BC.BoundedChan String -> IO ()
+twitterLoop _ = forever $ do
+    t <- twInfo
+    runNoLoggingT . runTW t $ do
+        sourceWithMaxId mentionsTimeline
+             $= CL.isolate 60
+             $$ CL.mapM_ $ \status -> liftIO $ do
+                 T.putStrLn $ T.concat [ T.pack . show $ status ^. statusId
+                                       , ": "
+                                       , status ^. statusUser . userScreenName
+                                       , ": "
+                                       , status ^. statusText
+                                       ]
