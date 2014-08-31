@@ -11,7 +11,6 @@ import Data.Conduit
 import qualified Data.Conduit.List as CL
 import Data.Maybe
 import qualified Data.Text as T
-import qualified Data.Text.IO as T
 import Data.Word
 import System.Environment
 import System.Hardware.Arduino
@@ -69,16 +68,11 @@ twInfo :: IO TWInfo
 twInfo = liftM3 setCredential tokens credential def
 
 twitterLoop :: BC.BoundedChan String -> IO ()
-twitterLoop _ = forever $ do
+twitterLoop channel = forever $ do
     threadDelay (1000 * 1000 * 90) -- 1.5 minutes; only allowed 15 requests per 15 minutes (i.e. 1 per minute) so wait 1.5 minutes to definitely avoid this... https://dev.twitter.com/docs/rate-limiting/1.1/limits
     t <- twInfo
     runNoLoggingT . runTW t $ do
         sourceWithMaxId mentionsTimeline
-             $= CL.isolate 60
-             $$ CL.mapM_ $ \status -> liftIO $ do
-                 T.putStrLn $ T.concat [ T.pack . show $ status ^. statusId
-                                       , ": "
-                                       , status ^. statusUser . userScreenName
-                                       , ": "
-                                       , status ^. statusText
-                                       ]
+            $= CL.isolate 60
+            $$ CL.mapM_ $ \status -> liftIO $ do
+                BC.writeChan channel $ T.unpack $ status ^. statusText
